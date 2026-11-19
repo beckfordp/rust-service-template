@@ -61,6 +61,8 @@ impl Routes for ExampleEvents {
         })
     }
 
+    // `Routes` is async; this example only logs (a real route awaits its store or client).
+    #[allow(clippy::unused_async_trait_impl)]
     async fn handle(&self, event_id: &str, event: &ExampleHappened) -> Result<(), EventsError> {
         self.logger.info(
             &[
