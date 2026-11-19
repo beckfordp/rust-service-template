@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MIT
+# A minimal Rust port of a gluon service (all-Rust prep P3): the shape of
+# notification-service-rs, none of its domain. Generate into gluon's services/:
+#   cd services && cargo generate --path ../tools/rust-service-template template \
+#     --name cart-service --define short_name=cart --define kafka=false
+# The project name is the Scala service's (`cart-service`); the repo directory is
+# renamed to `<name>-rs` afterwards (README.md, "After generating").
+
+[template]
+cargo_generate_version = ">=0.23"
+# Copied as they are: no Liquid in them.
+exclude = ["conductor/workflow.md", "conductor/code_styleguides/*", "LICENSE", ".github/**"]
+
+[placeholders.short_name]
+type = "string"
+prompt = "The service's short name: its database, user and table prefix (e.g. cart)"
+regex = "^[a-z][a-z0-9_]*$"
+
+[placeholders.kafka]
+type = "bool"
+prompt = "Does it consume Kafka events?"
+default = false
+
+[conditional.'!kafka']
+ignore = [
+  "crates/{{project-name}}/src/consumers.rs",
+  "crates/{{project-name}}/src/events.rs",
+  "crates/{{project-name}}/src/lifecycle.rs",
+  "crates/{{project-name}}/tests/events.rs",
+  "crates/{{project-name}}/tests/lifecycle.rs",
+]

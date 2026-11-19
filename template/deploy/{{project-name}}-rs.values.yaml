@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT
+# Copy to gluon environments/local/{{project-name}}-rs.values.yaml: the Rust
+# {{project-name}}, installed by bin/k8s-local-up under the same release name
+# when its <SVC>_IMPL=rust. The same env vars as {{project-name}}.values.yaml (copy
+# them from there); the chart's JVM-only settings blanked.
+image:
+  repository: {{project-name}}-rs
+  tag: latest
+
+javaOpts: ""
+mallocArenaMax: ""
+
+env:
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: http://tempo:4318
+  - name: POSTGRES_HOST
+    value: {{short_name}}-postgres
+  - name: POSTGRES_DB
+    value: {{short_name}}
+  - name: POSTGRES_USER
+    value: {{short_name}}
+  - name: POSTGRES_PASSWORD
+    value: {{short_name}}
+{%- if kafka %}
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: kafka:9092
+{%- endif %}
