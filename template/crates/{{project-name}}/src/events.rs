@@ -7,6 +7,7 @@
 //! Scala. Replaced by the Scala service's consumers.
 
 use kafka_event_consumer::envelope::{Envelope, Routes};
+use schemars::JsonSchema;
 use serde::Deserialize;
 use telemetry::logging::Logger;
 
@@ -21,7 +22,7 @@ pub const EXAMPLE_HAPPENED: &str = "ExampleHappened";
 
 /// `ExampleHappened`'s payload: required fields, others ignored, as circe's
 /// derived decoder does.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExampleHappened {
     /// Which example.

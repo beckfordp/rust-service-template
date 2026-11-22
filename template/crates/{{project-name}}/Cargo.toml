@@ -17,16 +17,20 @@ workspace = true
 kafka-client = { path = "../../../../lib/gluon-rs/crates/kafka-client" }
 kafka-event-consumer = { path = "../../../../lib/gluon-rs/crates/kafka-event-consumer" }
 {%- endif %}
+{%- if redis %}
+redis-cache = { path = "../../../../lib/gluon-rs/crates/redis-cache" }
+{%- endif %}
 service-basics = { path = "../../../../lib/gluon-rs/crates/service-basics" }
 telemetry = { path = "../../../../lib/gluon-rs/crates/telemetry" }
 axum = "0.8"
+schemars = { version = "1", features = ["preserve_order"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "migrate", "macros", "time", "uuid"] }
 thiserror = "2"
-time = { version = "0.3", features = ["formatting"] }
+time = { version = "0.3", features = ["formatting"{% if redis %}, "parsing", "serde-well-known"{% endif %}] }
 tokio = { version = "1", features = ["macros", "net", "sync"] }
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4"{% if redis %}, "serde"{% endif %}] }
 
 [dev-dependencies]
 service-testing = { path = "../../../../lib/gluon-rs/crates/service-testing" }

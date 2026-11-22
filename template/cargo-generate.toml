@@ -2,7 +2,8 @@
 # A minimal Rust port of a gluon service (all-Rust prep P3): the shape of
 # notification-service-rs, none of its domain. Generate into gluon's services/:
 #   cd services && cargo generate --path ../tools/rust-service-template template \
-#     --name cart-service --define short_name=cart --define kafka=false
+#     --name cart-service --define short_name=cart --define kafka=false \
+#     --define redis=true --define outbox=false
 # The project name is the Scala service's (`cart-service`); the repo directory is
 # renamed to `<name>-rs` afterwards (README.md, "After generating").
 
@@ -20,6 +21,28 @@ regex = "^[a-z][a-z0-9_]*$"
 type = "bool"
 prompt = "Does it consume Kafka events?"
 default = false
+
+[placeholders.redis]
+type = "bool"
+prompt = "Does it cache reads in Redis (REDIS_URI)?"
+default = false
+
+[placeholders.outbox]
+type = "bool"
+prompt = "Does it publish events through the outbox (Debezium)?"
+default = false
+
+[conditional.'!redis']
+ignore = [
+  "crates/{{project-name}}/src/cache.rs",
+  "crates/{{project-name}}/tests/cache.rs",
+]
+
+[conditional.'!outbox']
+ignore = [
+  "crates/{{project-name}}/migrations/2_create_outbox_events.sql",
+  "crates/{{project-name}}/src/published.rs",
+]
 
 [conditional.'!kafka']
 ignore = [

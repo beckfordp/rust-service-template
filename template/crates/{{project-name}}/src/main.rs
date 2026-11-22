@@ -19,6 +19,11 @@ use telemetry::logging::Logger;
 use telemetry::tracing::{SdkTracer, Tracing};
 use {{crate_name}}::config::{self, Config};
 use {{crate_name}}::store::PgExamples;
+{%- if redis %}
+use redis_cache::Cache;
+use std::sync::Arc;
+use {{crate_name}}::cache::{self, CachedExamples};
+{%- endif %}
 use {{crate_name}}::{db, server};
 
 fn main() -> ExitCode {
@@ -78,7 +83,18 @@ async fn serve(config: &Config, tracer: SdkTracer) -> ExitCode {
         &[("port", &config.port.to_string())],
         "{{project-name}} starting",
     );
+{%- if redis %}
+    let cache = match Cache::new(&config.redis_uri, cache::TIMEOUT) {
+        Ok(cache) => Arc::new(cache),
+        Err(error) => {
+            eprintln!("{SERVICE}: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let store = CachedExamples::new(PgExamples::new(pool), cache);
+{%- else %}
     let store = PgExamples::new(pool);
+{%- endif %}
 {%- if kafka %}
     let telemetry = ConsumerTelemetry {
         tracer,

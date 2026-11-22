@@ -7,6 +7,9 @@
 use std::fmt;
 use std::str::FromStr;
 
+{%- if redis %}
+use serde::{Deserialize, Serialize};
+{%- endif %}
 use time::OffsetDateTime;
 use uuid::Uuid;
 
@@ -14,7 +17,8 @@ use crate::clock::Clock;
 use crate::ids::IdGen;
 
 /// An example's id: a UUID, as the path carries it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash{% if redis %}, Serialize, Deserialize{% endif %})]{% if redis %}
+#[serde(transparent)]{% endif %}
 pub struct ExampleId(Uuid);
 
 impl ExampleId {
@@ -50,14 +54,15 @@ impl fmt::Display for ExampleId {
     }
 }
 
-/// An example row.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// An example row{% if redis %} (serialised as the cache holds it){% endif %}.
+#[derive(Debug, Clone, PartialEq, Eq{% if redis %}, Serialize, Deserialize{% endif %})]
 pub struct Example {
     /// Its id.
     pub id: ExampleId,
     /// Its name.
     pub name: String,
-    /// When it was made.
+    /// When it was made.{% if redis %}
+    #[serde(with = "time::serde::rfc3339")]{% endif %}
     pub created_at: OffsetDateTime,
 }
 

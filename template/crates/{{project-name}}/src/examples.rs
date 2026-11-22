@@ -9,6 +9,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use schemars::JsonSchema;
 use serde::Serialize;
 use service_basics::text_error::TextError;
 use time::format_description::well_known::Rfc3339;
@@ -18,7 +19,7 @@ use crate::server::AppState;
 use crate::store::{Examples, StoreError};
 
 /// An example, as JSON.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ExampleResponse {
     /// Its id.

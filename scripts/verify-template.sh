@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MIT
-# Verifies the template: generates both variants (kafka=false, kafka=true) into a
+# Verifies the template: generates its variants (none; kafka; redis+outbox; all
+# three) into a
 # scratch gluon layout (services/, lib/gluon-rs linked to gluon's), and for each
 # runs the generated README's steps 1, 2 and 5 — rename to -rs, `cargo update -w
 # --offline`, scripts/ci.sh — and gluon bin/check-locks on its lock. Each check
@@ -28,18 +29,21 @@ check() {
 }
 
 generate() {
-  local name="$1" kafka="$2"
+  local name="$1" kafka="$2" redis="$3" outbox="$4"
   cd "$WORK/services" &&
     cargo generate --path "$ROOT" template --name "$name" \
-      --define short_name=demo --define "kafka=$kafka" --vcs none --silent &&
+      --define short_name=demo --define "kafka=$kafka" --define "redis=$redis" \
+      --define "outbox=$outbox" --vcs none --silent &&
     mv "$name" "$name-rs" &&
     cd "$name-rs" &&
     cargo update -w --offline
 }
 
-for variant in "demo-service false" "demo-events-service true"; do
-  read -r name kafka <<< "$variant"
-  check "$name (kafka=$kafka) generates" "$name-generate.log" generate "$name" "$kafka"
+for variant in "demo-service false false false" "demo-events-service true false false" \
+  "demo-stores-service false true true" "demo-all-service true true true"; do
+  read -r name kafka redis outbox <<< "$variant"
+  check "$name (kafka=$kafka redis=$redis outbox=$outbox) generates" "$name-generate.log" \
+    generate "$name" "$kafka" "$redis" "$outbox"
   check "$name: scripts/ci.sh" "$name-ci.log" bash "$WORK/services/$name-rs/scripts/ci.sh"
   check "$name: no Liquid left unrendered" "$name-liquid.log" \
     bash -c "! grep -rn '{{\\|{%' '$WORK/services/$name-rs' --exclude-dir=target"
@@ -48,7 +52,7 @@ for variant in "demo-service false" "demo-events-service true"; do
 done
 
 if [ "$FAILED" = 0 ]; then
-  echo "PASS: the template's two variants generate and pass CI"
+  echo "PASS: the template's four variants generate and pass CI"
 else
   echo "FAIL: $FAILED check(s) failed"
   exit 1

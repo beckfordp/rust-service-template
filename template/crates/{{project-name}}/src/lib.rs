@@ -5,12 +5,16 @@
 //! the `example` table and `GET /examples/{id}` show the shape and go when
 //! the first real route arrives.
 
+{%- if redis %}
+pub mod cache;
+{%- endif %}
 pub mod clock;
 pub mod config;
 {%- if kafka %}
 pub mod consumers;
 {%- endif %}
 pub mod db;
+pub mod docs;
 pub mod domain;
 {%- if kafka %}
 pub mod events;
@@ -19,6 +23,9 @@ pub mod examples;
 pub mod ids;
 {%- if kafka %}
 pub mod lifecycle;
+{%- endif %}
+{%- if outbox %}
+pub mod published;
 {%- endif %}
 pub mod server;
 pub mod store;

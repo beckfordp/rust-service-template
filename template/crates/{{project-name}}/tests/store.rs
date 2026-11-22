@@ -50,3 +50,25 @@ async fn the_ping_follows_the_database() {
     assert!(!store.ping(Duration::from_secs(2)).await);
     assert!(store.get(Uuid::from_u128(7).into()).await.is_err());
 }
+{%- if outbox %}
+
+#[tokio::test]
+async fn storing_an_example_writes_its_event_in_the_same_transaction() {
+    let postgres = Postgres::start();
+    let store = support::store(&postgres).await;
+    let example = Example::new("first", &Fixed, &Fixed);
+    store.insert(&example).await.unwrap();
+    let id = example.id.to_string();
+    assert_eq!(postgres.query("select aggregate_id from outbox_events").trim(), id);
+    let payload = postgres.query("select payload::text from outbox_events");
+    let envelope: serde_json::Value = serde_json::from_str(payload.trim()).unwrap();
+    assert_eq!(envelope["eventType"], "ExampleCreated");
+    assert_eq!(envelope["source"], "{{project-name}}");
+    assert_eq!(envelope["correlationId"], id.as_str());
+    assert_eq!(envelope["timestamp"], "2026-11-20T10:00:00.123456Z");
+    assert_eq!(envelope["payload"], serde_json::json!({"exampleId": id, "name": "first"}));
+    // A failed insert (the same id) leaves no second event.
+    assert!(store.insert(&example).await.is_err());
+    assert_eq!(postgres.query("select count(*) from outbox_events").trim(), "1");
+}
+{%- endif %}

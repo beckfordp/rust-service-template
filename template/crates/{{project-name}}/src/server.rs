@@ -44,7 +44,7 @@ pub fn app<S: Examples>(store: S) -> Router {
     edge(routes(store), CorsPolicy::default())
 }
 
-/// The routes: health, the example, tapir's 405 for a known path with another
+/// The routes: health, the example, the docs (`crate::docs`), tapir's 405 for a known path with another
 /// method and 404 for any other.
 pub fn routes<S: Examples>(store: S) -> Router {
     health::routes()
@@ -55,6 +55,7 @@ pub fn routes<S: Examples>(store: S) -> Router {
         .method_not_allowed_fallback(method_not_allowed)
         .fallback(not_found)
         .with_state(AppState { store })
+        .merge(crate::docs::router())
 }
 
 /// 404 for any unknown path, marked [`Unrouted`] for CORS.

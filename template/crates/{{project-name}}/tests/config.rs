@@ -32,6 +32,9 @@ fn defaults() {
 {%- if kafka %}
             kafka_bootstrap: "localhost:9092".to_owned(),
 {%- endif %}
+{%- if redis %}
+            redis_uri: "redis://localhost:6379".to_owned(),
+{%- endif %}
             tracing: TracingConfig {
                 otlp_endpoint: None,
                 sampling_ratio: 1.0,
@@ -51,6 +54,7 @@ fn every_variable_overrides_its_default() {
         ("POSTGRES_USER", "u"),
         ("POSTGRES_PASSWORD", "p"),
         ("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:19092"),
+        ("REDIS_URI", "redis://127.0.0.1:16379"),
         ("OTEL_EXPORTER_OTLP_ENDPOINT", "http://127.0.0.1:4318"),
         ("OTEL_TRACES_SAMPLER_ARG", "0.25"),
     ]))
@@ -60,6 +64,9 @@ fn every_variable_overrides_its_default() {
     assert_eq!(config.postgres.port, 15432);
 {%- if kafka %}
     assert_eq!(config.kafka_bootstrap, "127.0.0.1:19092");
+{%- endif %}
+{%- if redis %}
+    assert_eq!(config.redis_uri, "redis://127.0.0.1:16379");
 {%- endif %}
     assert_eq!(config.tracing.sampling_ratio, 0.25);
 }

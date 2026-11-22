@@ -29,6 +29,10 @@ pub struct Config {
     /// `KAFKA_BOOTSTRAP_SERVERS`: the consumers' and DLQ producer's brokers.
     pub kafka_bootstrap: String,
 {%- endif %}
+{%- if redis %}
+    /// `REDIS_URI`: the read cache (never the source of truth).
+    pub redis_uri: String,
+{%- endif %}
     /// `OTEL_*`.
     pub tracing: TracingConfig,
 }
@@ -52,6 +56,9 @@ pub fn from_env<S: BuildHasher>(env: &HashMap<String, String, S>) -> Result<Conf
         postgres,
 {%- if kafka %}
         kafka_bootstrap: text("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+{%- endif %}
+{%- if redis %}
+        redis_uri: text("REDIS_URI", "redis://localhost:6379"),
 {%- endif %}
         tracing,
     })

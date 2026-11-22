@@ -7,11 +7,17 @@
 use std::future::Future;
 use std::time::Duration;
 
+{%- if outbox %}
+use service_basics::outbox;
+{%- endif %}
 use sqlx::PgPool;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::domain::{Example, ExampleId};
+{%- if outbox %}
+use crate::published::{EXAMPLE_CREATED, ExampleCreated, SOURCE};
+{%- endif %}
 
 /// Why a store call failed.
 #[derive(Debug, thiserror::Error)]
@@ -19,6 +25,11 @@ pub enum StoreError {
     /// The database refused or failed.
     #[error(transparent)]
     Database(#[from] sqlx::Error),
+{%- if outbox %}
+    /// An event payload didn't serialise.
+    #[error(transparent)]
+    Event(#[from] serde_json::Error),
+{%- endif %}
 }
 
 /// What the service needs from `example`.
@@ -62,6 +73,33 @@ impl Examples for PgExamples {
         }))
     }
 
+{%- if outbox %}
+    async fn insert(&self, example: &Example) -> Result<(), StoreError> {
+        let id = example.id.to_string();
+        let event = outbox::envelope(
+            EXAMPLE_CREATED,
+            SOURCE,
+            &id,
+            &id,
+            &ExampleCreated {
+                example_id: id.clone(),
+                name: example.name.clone(),
+            },
+            example.created_at,
+        )?;
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("insert into example (id, name, created_at) values ($1, $2, $3)")
+            .bind(example.id.uuid())
+            .bind(&example.name)
+            .bind(example.created_at)
+            .execute(&mut *tx)
+            .await?;
+        // No span yet to parent consumers' traces: pass the route's traceparent.
+        outbox::write(&mut tx, &event, None).await?;
+        tx.commit().await?;
+        Ok(())
+    }
+{%- else %}
     async fn insert(&self, example: &Example) -> Result<(), StoreError> {
         sqlx::query("insert into example (id, name, created_at) values ($1, $2, $3)")
             .bind(example.id.uuid())
@@ -71,6 +109,7 @@ impl Examples for PgExamples {
             .await?;
         Ok(())
     }
+{%- endif %}
 
     async fn ping(&self, within: Duration) -> bool {
         service_basics::postgres::ping(&self.pool, within)
