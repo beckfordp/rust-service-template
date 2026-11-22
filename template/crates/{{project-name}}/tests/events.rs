@@ -15,7 +15,7 @@ use support::{captured_logger, log_lines};
 use {{crate_name}}::consumers::{LAG_INTERVAL, settings};
 use {{crate_name}}::events::{EventsError, ExampleEvents, GROUP, TOPIC};
 
-fn envelope(event_type: &str, payload: Value) -> Envelope {
+fn envelope(event_type: &str, payload: &Value) -> Envelope {
     serde_json::from_value(json!({
         "eventId": "e1",
         "eventType": event_type,
@@ -31,9 +31,9 @@ fn envelope(event_type: &str, payload: Value) -> Envelope {
 async fn example_happened_is_logged_and_other_types_skipped() {
     let (logger, buffer) = captured_logger();
     let route = ExampleEvents::new(logger);
-    assert!(route.decode(&envelope("SomethingElse", json!({}))).is_none());
+    assert!(route.decode(&envelope("SomethingElse", &json!({}))).is_none());
     let event = route
-        .decode(&envelope("ExampleHappened", json!({"exampleId": "x1"})))
+        .decode(&envelope("ExampleHappened", &json!({"exampleId": "x1"})))
         .unwrap()
         .unwrap();
     assert!(route.handle("e1", &event).await.is_ok());
@@ -47,7 +47,7 @@ async fn example_happened_is_logged_and_other_types_skipped() {
 #[test]
 fn a_payload_that_isnt_the_events_is_poison() {
     let (logger, _) = captured_logger();
-    let decoded = ExampleEvents::new(logger).decode(&envelope("ExampleHappened", json!({})));
+    let decoded = ExampleEvents::new(logger).decode(&envelope("ExampleHappened", &json!({})));
     assert!(
         matches!(decoded, Some(Err(EventsError::Payload(_)))),
         "{decoded:?}"

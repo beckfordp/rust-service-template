@@ -80,7 +80,7 @@ async fn consumers_that_stop_by_themselves_fail_the_service() {
     let server_stopped = Arc::default();
     let (logger, buffer) = captured_logger();
 
-    let well = run_until_stopped(
+    let well = run_until_stopped::<_, _, _, String, _>(
         until_stopped(&stopped, &server_stopped),
         ready(Ok(())),
         pending(),
@@ -161,7 +161,7 @@ async fn a_task_that_panics_fails_the_service() {
     let server_stopped = Arc::default();
     let (logger, buffer) = captured_logger();
 
-    let well = run_until_stopped(
+    let well = run_until_stopped::<_, _, _, String, _>(
         until_stopped(&stopped, &server_stopped),
         async { panic!("consumer bug") },
         pending(),
